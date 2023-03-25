@@ -16,6 +16,8 @@ cd vcpkg_vc-ltl
 ./vcpkg install curl:x64-ltl-dll-mt
 ```
 
+**注意： 这里比官方仓库少了调用bootstrap-vcpkg.bat的步骤，原因是vcpkg原版exe会检测过期crt，所以我对vcpkg.exe源码进行了修改，修改版源码仓库：[vcpkg-tool](https://github.com/xspeed1989/vcpkg-tool)**
+
 支持的vcpkg triplet：
 
 * **x64-ltl-dll-mt**
