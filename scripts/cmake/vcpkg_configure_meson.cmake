@@ -57,11 +57,9 @@ function(z_vcpkg_meson_set_proglist_variables config_type)
 endfunction()
 
 function(z_vcpkg_meson_convert_compiler_flags_to_list out_var compiler_flags)
-    string(REPLACE ";" [[\;]] tmp_var "${compiler_flags}")
-    string(REGEX REPLACE [=[( +|^)((\"(\\"|[^"])+"|\\"|\\ |[^ ])+)]=] ";\\2" tmp_var "${tmp_var}")
-    vcpkg_list(POP_FRONT tmp_var) # The first element is always empty due to the above replacement
-    list(TRANSFORM tmp_var STRIP) # Strip leading trailing whitespaces from each element in the list.
-    set("${out_var}" "${tmp_var}" PARENT_SCOPE)
+    separate_arguments(cmake_list NATIVE_COMMAND "${compiler_flags}")
+    list(TRANSFORM cmake_list REPLACE ";" [[\\;]])
+    set("${out_var}" "${cmake_list}" PARENT_SCOPE)
 endfunction()
 
 function(z_vcpkg_meson_convert_list_to_python_array out_var)
@@ -142,6 +140,7 @@ function(z_vcpkg_get_build_and_host_system build_system host_system is_cross) #h
         execute_process(
             COMMAND uname -m
             OUTPUT_VARIABLE MACHINE
+            OUTPUT_STRIP_TRAILING_WHITESPACE
             COMMAND_ERROR_IS_FATAL ANY)
 
         # Show real machine architecture to visually understand whether we are in a native Apple Silicon terminal or running under Rosetta emulation
@@ -264,8 +263,6 @@ function(z_vcpkg_meson_setup_extra_windows_variables config_type)
     ## winlibs
     separate_arguments(c_winlibs NATIVE_COMMAND "${VCPKG_DETECTED_CMAKE_C_STANDARD_LIBRARIES}")
     separate_arguments(cpp_winlibs NATIVE_COMMAND "${VCPKG_DETECTED_CMAKE_CXX_STANDARD_LIBRARIES}")
-    list(TRANSFORM c_winlibs REPLACE "^(-|/)" "")
-    list(TRANSFORM cpp_winlibs REPLACE "^(-|/)" "")
     z_vcpkg_meson_convert_list_to_python_array(c_winlibs ${c_winlibs})
     z_vcpkg_meson_convert_list_to_python_array(cpp_winlibs ${cpp_winlibs})
     set(MESON_WINLIBS "c_winlibs = ${c_winlibs}\n")

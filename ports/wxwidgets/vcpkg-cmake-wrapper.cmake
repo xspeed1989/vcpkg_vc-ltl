@@ -1,6 +1,7 @@
 cmake_policy(PUSH)
 cmake_policy(SET CMP0012 NEW)
 cmake_policy(SET CMP0054 NEW)
+cmake_policy(SET CMP0057 NEW)
 
 get_filename_component(_vcpkg_wx_root "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
 set(wxWidgets_ROOT_DIR "${_vcpkg_wx_root}" CACHE INTERNAL "")
@@ -53,6 +54,14 @@ if(DEFINED _vcpkg_wxwidgets_backup_crosscompiling)
     set(CMAKE_CROSSCOMPILING "${_vcpkg_wxwidgets_backup_crosscompiling}")
     unset(_vcpkg_wxwidgets_backup_crosscompiling)
 endif()
+
+if("@VCPKG_LIBRARY_LINKAGE@" STREQUAL "static" AND NOT "wx::core" IN_LIST wxWidgets_LIBRARIES)
+    find_package(NanoSVG CONFIG QUIET)
+    list(APPEND wxWidgets_LIBRARIES
+        NanoSVG::nanosvg NanoSVG::nanosvgrast
+        )
+endif()
+
 
 if(WIN32 AND "@VCPKG_LIBRARY_LINKAGE@" STREQUAL "static" AND NOT "wx::core" IN_LIST wxWidgets_LIBRARIES)
     find_package(EXPAT QUIET)

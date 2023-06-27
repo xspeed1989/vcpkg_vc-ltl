@@ -2,7 +2,7 @@ if (EXISTS "${CURRENT_INSTALLED_DIR}/Media/HLMS/Blendfunctions_piece_fs.glslt")
     message(FATAL_ERROR "FATAL ERROR: ogre-next and ogre are incompatible.")
 endif()
 
-if(NOT VCPKG_TARGET_IS_WINDOWS)
+if(NOT VCPKG_TARGET_IS_WINDOWS AND NOT VCPKG_TARGET_IS_OSX)
     message("${PORT} currently requires the following library from the system package manager:\n    Xaw\n\nIt can be installed on Ubuntu systems via apt-get install libxaw7-dev")
 endif()
 
@@ -10,17 +10,18 @@ if(VCPKG_TARGET_IS_ANDROID OR VCPKG_TARGET_IS_IOS OR VCPKG_TARGET_IS_EMSCRIPTEN)
     vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 endif()
 
+set(PATCHLIB fix-dependencies.patch cfg-rel-paths.patch swig-python-polyfill.patch pkgconfig.patch same-install-rules-all-platforms.patch)
+if(VCPKG_TARGET_IS_OSX)
+    list(APPEND PATCHLIB fix_override.patch) # upstream PR:https://github.com/OGRECave/ogre/pull/2831
+endif()
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO OGRECave/ogre
-    REF v13.4.4
-    SHA512 59e0929f5022b2d289030d42c651ce4f44a215be7aae262b1b6919e1d00225d226cce6bfa2e78525ae902290615c87eabe7b8dfe27b7087dd56081460bd35e1f
+    REF "v${VERSION}"
+    SHA512 d4022a454e0649a01182545f24094ba1f72127099a9b096e1b438238659629e93b1d79277d02acc0aceebdc3969aab0031de7f86390077bafc66ccfd86755430
     HEAD_REF master
     PATCHES
-        fix-dependencies.patch
-        cfg-rel-paths.patch
-        swig-python-polyfill.patch
-        pkgconfig.patch
+        ${PATCHLIB}       
 )
 
 file(REMOVE "${SOURCE_PATH}/CMake/Packages/FindOpenEXR.cmake")
@@ -94,12 +95,15 @@ vcpkg_cmake_configure(
         -DOGRE_BUILD_RENDERSYSTEM_GLES2=OFF
         -DCMAKE_REQUIRE_FIND_PACKAGE_ZLIB=ON
         -DCMAKE_DISABLE_FIND_PACKAGE_Doxygen=ON
+        -DCMAKE_DISABLE_FIND_PACKAGE_QT=ON
         -DCMAKE_DISABLE_FIND_PACKAGE_Qt5=ON
         -DCMAKE_DISABLE_FIND_PACKAGE_Qt6=ON
     OPTIONS_DEBUG
         -DOGRE_BUILD_TOOLS=OFF
         -DOGRE_INSTALL_TOOLS=OFF
     MAYBE_UNUSED_VARIABLES
+        CMAKE_DISABLE_FIND_PACKAGE_Qt5
+        CMAKE_DISABLE_FIND_PACKAGE_Qt6
         CMAKE_REQUIRE_FIND_PACKAGE_OpenEXR
         OGRE_COPY_DEPENDENCIES
         OGRE_BUILD_MSVC_MP
@@ -115,10 +119,13 @@ vcpkg_copy_pdbs()
 vcpkg_cmake_config_fixup()
 vcpkg_fixup_pkgconfig()
 
+
 if(NOT VCPKG_BUILD_TYPE)
     vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/debug/etc/${PORT}/resources.cfg" "=../../share" "=../../../share")
+    vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/debug/etc/${PORT}/resources.cfg" "[Tests]\nFileSystem=${CURRENT_PACKAGES_DIR}/debug/Tests/Media" "")
     vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/share/${PORT}/OgreTargets-debug.cmake" "${_IMPORT_PREFIX}/plugins" "${_IMPORT_PREFIX}/debug/plugins")
 endif()
+vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/etc/${PORT}/resources.cfg" "[Tests]\nFileSystem=${CURRENT_PACKAGES_DIR}/Tests/Media" "")
 
 file(REMOVE_RECURSE
     "${CURRENT_PACKAGES_DIR}/etc/ogre/samples.cfg"

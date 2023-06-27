@@ -8,8 +8,8 @@ else()
     vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO skypjack/entt
-        REF v3.10.1
-        SHA512 ce611f8892626d8df2d6be6a0e7c0218683899bae5665b4466f149c6a5b6a4d184b390370262faa3ea822a399ac71a92f4780e9a22438d4a7a14ca5f554e94c4
+        REF "v${VERSION}"
+        SHA512 51fe70e68cbb7d3a5a9ca6b5ff974d324e34248a13a1c828b6c5876461a173861ab26f1bfd0bac7287f8499d07b93bdb73622b579d11a65c916aad7b642dc6e0
         HEAD_REF master
     )
 endif()
@@ -35,4 +35,4 @@ file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug" "${CURRENT_PACKAGES_DIR}/lib
 file(INSTALL "${SOURCE_PATH}/natvis/entt" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}/natvis")
 
 # Handle copyright
-file(INSTALL "${SOURCE_PATH}/LICENSE" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE")

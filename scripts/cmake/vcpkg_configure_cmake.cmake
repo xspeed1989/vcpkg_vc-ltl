@@ -1,4 +1,3 @@
-
 function(z_vcpkg_configure_cmake_both_or_neither_set var1 var2)
     if(DEFINED "${var1}" AND NOT DEFINED "${var2}")
         message(FATAL_ERROR "If ${var1} is set, ${var2} must be set.")
@@ -186,6 +185,10 @@ function(vcpkg_configure_cmake)
         endif()
     endif()
 
+    if(DEFINED VCPKG_XBOX_CONSOLE_TARGET)
+        vcpkg_list(APPEND arg_OPTIONS "-DXBOX_CONSOLE_TARGET=${VCPKG_XBOX_CONSOLE_TARGET}")
+    endif()
+
     if(DEFINED VCPKG_CMAKE_SYSTEM_VERSION)
         vcpkg_list(APPEND arg_OPTIONS "-DCMAKE_SYSTEM_VERSION=${VCPKG_CMAKE_SYSTEM_VERSION}")
     endif()
@@ -212,7 +215,7 @@ function(vcpkg_configure_cmake)
     if(NOT VCPKG_CHAINLOAD_TOOLCHAIN_FILE)
         z_vcpkg_select_default_vcpkg_chainload_toolchain()
     endif()
-  
+
     vcpkg_list(APPEND arg_OPTIONS
         "-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${VCPKG_CHAINLOAD_TOOLCHAIN_FILE}"
         "-DVCPKG_TARGET_TRIPLET=${TARGET_TRIPLET}"
@@ -234,7 +237,6 @@ function(vcpkg_configure_cmake)
         "-DVCPKG_C_FLAGS_DEBUG=${VCPKG_C_FLAGS_DEBUG}"
         "-DVCPKG_CRT_LINKAGE=${VCPKG_CRT_LINKAGE}"
         "-DVCPKG_CRT_LINKAGE_DEBUG=${VCPKG_CRT_LINKAGE_DEBUG}"
-        "-DVCPKG_IS_LTL=${VCPKG_IS_LTL}"
         "-DVCPKG_LINKER_FLAGS=${VCPKG_LINKER_FLAGS}"
         "-DVCPKG_LINKER_FLAGS_RELEASE=${VCPKG_LINKER_FLAGS_RELEASE}"
         "-DVCPKG_LINKER_FLAGS_DEBUG=${VCPKG_LINKER_FLAGS_DEBUG}"
@@ -245,6 +247,7 @@ function(vcpkg_configure_cmake)
         "-DZ_VCPKG_ROOT_DIR=${VCPKG_ROOT_DIR}"
         "-D_VCPKG_INSTALLED_DIR=${_VCPKG_INSTALLED_DIR}"
         "-DVCPKG_MANIFEST_INSTALL=OFF"
+        "-DVCPKG_IS_LTL=${VCPKG_IS_LTL}"
     )
 
     if(NOT "${generator_arch}" STREQUAL "")
@@ -314,7 +317,9 @@ function(vcpkg_configure_cmake)
             COMMAND "${NINJA}" -v
             WORKING_DIRECTORY "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/vcpkg-parallel-configure"
             LOGNAME "${arg_LOGNAME}"
-            SAVE_LOG_FILES ../../${TARGET_TRIPLET}-dbg/CMakeCache.txt ../CMakeCache.txt
+            SAVE_LOG_FILES
+                "../../${TARGET_TRIPLET}-dbg/CMakeCache.txt" ALIAS "dbg-CMakeCache.txt.log"
+                "../CMakeCache.txt" ALIAS "rel-CMakeCache.txt.log"
         )
         
         vcpkg_list(APPEND config_logs
@@ -364,6 +369,7 @@ function(vcpkg_configure_cmake)
         string(STRIP "${CMAKE_MATCH_1}" unused_variables) # remove leading `    ` and trailing `\n`
         string(REPLACE "\n    " ";" unused_variables "${unused_variables}")
         debug_message("unused variables: ${unused_variables}")
+
         foreach(unused_variable IN LISTS unused_variables)
             if("${unused_variable}" IN_LIST manually_specified_variables)
                 debug_message("manually specified unused variable: ${unused_variable}")
